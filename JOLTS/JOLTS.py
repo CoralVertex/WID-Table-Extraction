@@ -3,8 +3,8 @@ import requests
 import pandas as pd
 
 typeVar = 'current' #current (Nine years of data plus year-to-date estimates) or all
-states = ['00','27']
-years = [2022,2021]
+states = ['00','27'] #select desired state fips codes
+years = [2022,2021] #select desired years - if year is unavailable it will bring in nothing rather than giving an error
 
 series_url = "https://download.bls.gov/pub/time.series/jt/jt.series"
 industry_url = "https://download.bls.gov/pub/time.series/jt/jt.industry"
@@ -76,7 +76,7 @@ for x in range(max(dataTable.index)+1):
 # filter tables for areas and years
 dataTable['include'] = 0
 for y in range(max(dataTable.index)+1):
-    if dataTable['stfips'].iloc[y] in states and dataTable['periodyear'].iloc[y] in years and dataTable['period'].iloc[y] != '00':
+    if dataTable['stfips'].iloc[y] in states and dataTable['periodyear'].iloc[y] in years and dataTable['period'].iloc[y] != '00' and dataTable['sizeclasscode'].iloc[y] == 0: #excludes annual data
         dataTable['include'].iloc[y] = 1
 dataTable = dataTable[dataTable['include']==1]
 
@@ -85,7 +85,7 @@ outputTable = tempTable.pivot(index=['stfips','areatype','area','periodyear','pe
 
 outputTable = outputTable.reset_index()
 outputTable.columns = ['_'.join(str(s).strip() for s in col if s) for col in outputTable.columns]
-outputTable = outputTable.rename({'industry_code':'indcode','value_L':'value', 'value_R':'rate'})
+outputTable = outputTable.rename(columns={'industry_code':'indcode','value_L':'value', 'value_R':'rate'})
 
 
 industryOutput = pd.DataFrame(outputTable['stfips'].drop_duplicates())
