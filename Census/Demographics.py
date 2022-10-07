@@ -4,12 +4,13 @@ from pandas.core.frame import DataFrame
 import requests
 import pandas as pd
 
-year = "2019" #exactly 1 acs year
-stfips = ['01','27'] #more than a few will result in a very large dataset and very slow processing
+year = "2020" #exactly 1 acs year
+#stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
+stfips = ['01'] #more than a few will result in a very large dataset and very slow processing
 
 def api_call(statefips, year, acslen, tabletype, group, regiontype):
 
-    api_key = "" #@param {type:"string"}
+    api_key = "18cf07adaaec4c17e9e0cdcc987db5ec91746aaf" #@param {type:"string"}
 
     ##create syntax for table types
     if tabletype == "subject":
@@ -70,8 +71,8 @@ df_stfips = df_stfips[df_stfips['stfips'].isin(stfips)]
 
 varnames_list = ['GEO_ID','NAME','state','periodyear','acslen','regiontype','population','male','maleunder5','male5to9','male10to14','male15to17','male18to19','male20','male21','male22to24','male25to29','male30to34','male35to39','male40to44','male45to49','male50to54','male55to59','male60to61','male62to64','male65to66','male67to69','male70to74','male75to79','male80to84','male85xx','female','femaleunder5','female5to9','female10to14','female15to17','female18to19','female20','female21','female22to24','female25to29','female30to34','female35to39','female40to44','female45to49','female50to54','female55to59','female60to61','female62to64','female65to66','female67to69','female70to74','female75to79','female80to84','female85xx','white','black','naan','asian','pacisland','other','twomoreraces','hispanic','median','medianmale','medianfem','hispwhite','hispblack','hispnaan','hispasian','hisppacisl','hispother','hisp2race']
 detaileds = ['B01001','B01001A','B01001B','B01001C','B01001D','B01001E','B01001F','B01001G','B01001I','B01002','B03002']
-regions = ['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
-list_acslen = [5,1]
+regions = ['metro','state']#['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
+list_acslen = [5]
 
 def extract_data(group):
     appendOutput = pd.DataFrame()
