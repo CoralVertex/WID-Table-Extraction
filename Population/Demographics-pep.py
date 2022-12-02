@@ -1,5 +1,5 @@
 stfips = '05'
-year = '2016'
+year = '2021'
 cohorts = [[0,18],[19,25],[26,35],[36,45],[46,55],[56,65],[66,75],[76,85]]
 
 
@@ -77,12 +77,15 @@ while y < len(workingDf.index):
 
 
 exportDf = workingDf.groupby(['cohort'])[cols2].apply(lambda x : x.astype(int).sum())
+exportDf['stfips'] = stfips
 # export file
 FileExport = 'PopPyramid'+year+'.xlsx'
 
 with open(FileExport, 'w') as f:
-  exportDf[cols2].to_excel(FileExport,index=False)
+  exportDf.to_excel(FileExport,index=False)
 
 
 
 display(exportDf[cols2])
+
+display('Finished!')
