@@ -1,12 +1,14 @@
-stfips = '05'
-countyfips = 1 #no leading zeroes
-year = '2018'
+stfips = '27'
+countyfips = 137 #no leading zeroes
+year = '2021'
 area = 'county' #county or state
 cohorts = 'fiveyear' #fiveyear or tenyear
 
+##https://www.census.gov/data/datasets/time-series/demo/popest/intercensal-2000-2010-counties.html
 
 import requests
 import pandas as pd
+import matplotlib.pyplot as plt
 
 url_new = "https://www2.census.gov/programs-surveys/popest/datasets/2020-2021/counties/asrh/cc-est" + year + "-agesex-" + stfips + ".csv"
 url_old = "https://www2.census.gov/programs-surveys/popest/datasets/2010-2019/counties/asrh/cc-est2019-agesex-" + stfips + ".csv"
@@ -32,7 +34,7 @@ initialDf = pd.read_csv(FileName)
 
 yearnum = int(year)-baseyear+2
 newdf = initialDf[(initialDf['COUNTY'] == countyfips) & (initialDf['YEAR'] == yearnum)]
-display(newdf)
+#display(newdf)
 
 
 
@@ -57,8 +59,19 @@ FileExport = 'CountyPopPyramid'+year+'.xlsx'
 with open(FileExport, 'w') as f:
   outputDf.to_excel(FileExport,index=False)
 
+CTYNAME = outputDf['CTYNAME'][0]
+outputDf['male'] = outputDf[year + ' Male']
+outputDf['female'] = outputDf[year + ' Female'] * -1
+chartDf = outputDf[['age', 'male', 'female']]
 
+#display(chartDf)
 
+ax = chartDf.plot.barh(x='age')
+ax.invert_yaxis()
+ax.set_xlabel(None)
+ax.set_title(year + ' ' + CTYNAME.iloc[0] + ' Population Pyramid')
+
+plt.show()
 
 
 display('Finished!')
