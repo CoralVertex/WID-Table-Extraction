@@ -6,7 +6,7 @@ import pandas as pd
 
 year = "2022" #exactly 1 acs year
 stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
-stfips = ['27']##list(stfips_df['stfips']) #more than a few will result in a very large dataset and very slow processing
+stfips = list(stfips_df['stfips']) #more than a few will result in a very large dataset and very slow processing
 
 
 def api_call(statefips, year, acslen, tabletype, group, regiontype):
