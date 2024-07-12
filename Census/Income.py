@@ -4,14 +4,14 @@ from pandas.core.frame import DataFrame
 import requests
 import pandas as pd
 
-year = "2019" #exactly 1 acs year
+year = "2022" #exactly 1 acs year
 stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
-stfips = list(stfips_df['stfips']) #more than a few will result in a very large dataset and very slow processing
+stfips = ['27']##list(stfips_df['stfips']) #more than a few will result in a very large dataset and very slow processing
 
 
 def api_call(statefips, year, acslen, tabletype, group, regiontype):
 
-    api_key = "18cf07adaaec4c17e9e0cdcc987db5ec91746aaf" #@param {type:"string"}
+    api_key = "" #@param {type:"string"}
 
     ##create syntax for table types
     if tabletype == "subject":
@@ -72,7 +72,7 @@ df_stfips = df_stfips[df_stfips['stfips'].isin(stfips)]
 
 varnames_list = ['GEO_ID','NAME','state','periodyear','acslen','regiontype','income','population']
 detaileds = ['B01001','B19013']
-regions = ['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
+regions = ['state']##['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
 list_acslen = [5]
 
 def extract_data(group):
@@ -91,7 +91,7 @@ def extract_data(group):
                     df['periodyear'] = year
                     df['acslen'] = acslen
                     df['regiontype'] = regiontype
-                    appendOutput = appendOutput.append(df, ignore_index=True)
+                    appendOutput = pd.concat([df,appendOutput], ignore_index=True)
     appendOutput = appendOutput.rename(columns=titles[1:])
     tableoutput = appendOutput[appendOutput[0] != 'NAME']
     return tableoutput
@@ -116,7 +116,7 @@ outputDf.columns = outputDf.columns[:0].tolist() + varnames_list
 outputDf['period']='00'
 outputDf['periodtype'] = '01'
 outputDf['incsource'] = '1'
-outputDf['inctype'] = '01'
+outputDf['inctype'] = '03'
 outputDf['releasedate'] = str(int(year)+1)
 for z in range(outputDf['GEO_ID'].count()): 
     if outputDf['acslen'].iloc[z] == '5':
@@ -138,6 +138,5 @@ FileName = 'income'+year+'.xlsx'
 with open(FileName, 'w') as f:
   outputDf3[['Stfips','Areatype','area','periodyear','periodtype','period','inctype','incsource','income','incrank','population','releasedate']].to_excel(FileName,index=False)
 
-display(outputDf3.loc[:, outputDf3['Areatype'].isin(areatypes)])
 
 print('Finished!')
