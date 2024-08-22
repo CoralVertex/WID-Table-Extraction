@@ -3,6 +3,7 @@ from numpy import nan
 from pandas.core.frame import DataFrame
 import requests
 import pandas as pd
+from API import *
 
 year = "2022" #exactly 1 acs year
 stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
@@ -10,8 +11,6 @@ stfips = list(stfips_df['stfips']) #more than a few will result in a very large 
 
 
 def api_call(statefips, year, acslen, tabletype, group, regiontype):
-
-    api_key = "" #@param {type:"string"}
 
     ##create syntax for table types
     if tabletype == "subject":
