@@ -4,7 +4,7 @@ from pandas.core.frame import DataFrame
 import requests
 import pandas as pd
 
-year = "2020" #exactly 1 acs year
+year = "2023" #exactly 1 acs year
 #stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
 stfips = ['01'] #more than a few will result in a very large dataset and very slow processing
 
