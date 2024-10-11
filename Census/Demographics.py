@@ -5,9 +5,9 @@ import requests
 import pandas as pd
 from API import *
 
-year = "2023" #exactly 1 acs year
+year = "2022" #exactly 1 acs year
 #stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
-stfips = ['01'] #more than a few will result in a very large dataset and very slow processing
+stfips = ['47'] #more than a few will result in a very large dataset and very slow processing
 
 def api_call(statefips, year, acslen, tabletype, group, regiontype):
 
@@ -71,7 +71,7 @@ df_stfips = df_stfips[df_stfips['stfips'].isin(stfips)]
 
 varnames_list = ['GEO_ID','NAME','state','periodyear','acslen','regiontype','population','male','maleunder5','male5to9','male10to14','male15to17','male18to19','male20','male21','male22to24','male25to29','male30to34','male35to39','male40to44','male45to49','male50to54','male55to59','male60to61','male62to64','male65to66','male67to69','male70to74','male75to79','male80to84','male85xx','female','femaleunder5','female5to9','female10to14','female15to17','female18to19','female20','female21','female22to24','female25to29','female30to34','female35to39','female40to44','female45to49','female50to54','female55to59','female60to61','female62to64','female65to66','female67to69','female70to74','female75to79','female80to84','female85xx','white','black','naan','asian','pacisland','other','twomoreraces','hispanic','median','medianmale','medianfem','hispwhite','hispblack','hispnaan','hispasian','hisppacisl','hispother','hisp2race']
 detaileds = ['B01001','B01001A','B01001B','B01001C','B01001D','B01001E','B01001F','B01001G','B01001I','B01002','B03002']
-regions = ['metro','state']#['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
+regions = ['state','county']#['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
 list_acslen = [5]
 
 def extract_data(group):
@@ -90,7 +90,7 @@ def extract_data(group):
                     df['periodyear'] = year
                     df['acslen'] = acslen
                     df['regiontype'] = regiontype
-                    appendOutput = appendOutput.append(df, ignore_index=True)
+                    appendOutput = pd.concat([appendOutput,df], ignore_index=True)
     appendOutput = appendOutput.rename(columns=titles[1:])
     tableoutput = appendOutput[appendOutput[0] != 'NAME']
     return tableoutput
@@ -123,7 +123,7 @@ dfB03002['ident'] = dfB03002['periodyear'] + dfB03002['acslen'] + dfB03002['GEO_
 
 
 # join all tables
-combinedDf = dfB01001.drop_duplicates().set_index('ident').join(dfB01001A.drop_duplicates().set_index('ident'), rsuffix='_A').join(dfB01001B.drop_duplicates().set_index('ident'), rsuffix='_B').join(dfB01001C.drop_duplicates().set_index('ident'), rsuffix='_C').join(dfB01001D.drop_duplicates().set_index('ident'), rsuffix='_D').join(dfB01001E.drop_duplicates().set_index('ident'), rsuffix='_E').join(dfB01001F.drop_duplicates().set_index('ident'), rsuffix='_F').join(dfB01001G.drop_duplicates().set_index('ident'), rsuffix='_G').join(dfB01001I.drop_duplicates().set_index('ident'), rsuffix='_I').join(dfB01002.drop_duplicates().set_index('ident'), rsuffix='_2').join(dfB03002.drop_duplicates().set_index('ident'), rsuffix='_3')
+combinedDf = dfB01001.drop_duplicates().set_index('ident').join(dfB01001A.drop_duplicates().set_index('ident'), rsuffix='_A').join(dfB01001B.drop_duplicates().set_index('ident'), rsuffix='_B').join(dfB01001C.drop_duplicates().set_index('ident'), rsuffix='_C',lsuffix='_x').join(dfB01001D.drop_duplicates().set_index('ident'), rsuffix='_D',lsuffix='_y').join(dfB01001E.drop_duplicates().set_index('ident'), rsuffix='_E',lsuffix='_z').join(dfB01001F.drop_duplicates().set_index('ident'), rsuffix='_F',lsuffix='_m').join(dfB01001G.drop_duplicates().set_index('ident'), rsuffix='_G',lsuffix='_n').join(dfB01001I.drop_duplicates().set_index('ident'), rsuffix='_I',lsuffix='_o').join(dfB01002.drop_duplicates().set_index('ident'), rsuffix='_2',lsuffix='_p').join(dfB03002.drop_duplicates().set_index('ident'), rsuffix='_3',lsuffix='_q')
 # extract relevant fields
 outputDf = combinedDf[['GEO_ID','NAME','state','periodyear','acslen','regiontype','B01001_001E','B01001_002E','B01001_003E','B01001_004E','B01001_005E','B01001_006E','B01001_007E','B01001_008E','B01001_009E','B01001_010E','B01001_011E','B01001_012E','B01001_013E','B01001_014E','B01001_015E','B01001_016E','B01001_017E','B01001_018E','B01001_019E','B01001_020E','B01001_021E','B01001_022E','B01001_023E','B01001_024E','B01001_025E','B01001_026E','B01001_027E','B01001_028E','B01001_029E','B01001_030E','B01001_031E','B01001_032E','B01001_033E','B01001_034E','B01001_035E','B01001_036E','B01001_037E','B01001_038E','B01001_039E','B01001_040E','B01001_041E','B01001_042E','B01001_043E','B01001_044E','B01001_045E','B01001_046E','B01001_047E','B01001_048E','B01001_049E','B01001A_001E','B01001B_001E','B01001C_001E','B01001D_001E','B01001E_001E','B01001F_001E','B01001G_001E','B01001I_001E','B01002_001E','B01002_002E','B01002_003E','B03002_013E','B03002_014E','B03002_015E','B03002_016E','B03002_017E','B03002_018E','B03002_019E']]
 # rename with WID field names
