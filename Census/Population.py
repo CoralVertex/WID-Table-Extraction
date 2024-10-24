@@ -5,9 +5,9 @@ import requests
 import pandas as pd
 from API import *
 
-year = "2021" #exactly 1 acs year
+year = "2016" #exactly 1 acs year
 #stfips_df = pd.read_csv ('all_stfips.csv', dtype = {'stfips': str})
-stfips = ['01','02','04','05','06','08','09','10','11','12','13','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','44','45','46','47','48','49','50','51','53','54','55','56','72'] #more than a few will result in a very large dataset and very slow processing
+stfips = ['01']#,'02','04','05','06','08','09','10','11','12','13','15','16','17','18','19','20','21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40','41','42','44','45','46','47','48','49','50','51','53','54','55','56','72'] #more than a few will result in a very large dataset and very slow processing
 
 
 def api_call(statefips, year, acslen, tabletype, group, regiontype):
@@ -72,7 +72,7 @@ df_stfips = df_stfips[df_stfips['stfips'].isin(stfips)]
 
 varnames_list = ['GEO_ID','NAME','state','periodyear','acslen','regiontype','population','male','maleunder5','male5to9','male10to14','male15to17','male18to19','male20','male21','male22to24','male25to29','male30to34','male35to39','male40to44','male45to49','male50to54','male55to59','male60to61','male62to64','male65to66','male67to69','male70to74','male75to79','male80to84','male85xx','female','femaleunder5','female5to9','female10to14','female15to17','female18to19','female20','female21','female22to24','female25to29','female30to34','female35to39','female40to44','female45to49','female50to54','female55to59','female60to61','female62to64','female65to66','female67to69','female70to74','female75to79','female80to84','female85xx']
 detaileds = ['B01001','B01001A','B01001B','B01001C','B01001D','B01001E','B01001F','B01001G','B01001I','B01002','B03002']
-regions = ['us', 'state','county']#['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
+regions = ['us']#, 'state','county']#['tribalarea','city','metro','us','state','county', 'place']#'us','tribalarea',msa do not take stfips and will be duplicated for all states requested
 list_acslen = [5]
 
 def extract_data(group):

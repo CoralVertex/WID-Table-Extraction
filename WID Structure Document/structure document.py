@@ -25,9 +25,7 @@ def export_to_docx(df_list, title):
     doctitle = title + ".docx"
     document = Document()
 
-    
-
-    document.add_heading(title, 0)
+    document.add_heading(title, 1)
 
     sections = document.sections
     for section in sections:
@@ -45,7 +43,7 @@ def export_to_docx(df_list, title):
         if dataframe.columns.values[0] != 'Constraints' and len(dataframe)==1 and pagerow>40:
             document.add_page_break()
 
-            h = document.add_heading(dataframe.columns[0][:-2], 1)
+            h = document.add_heading(dataframe.columns[0][:-2], 2)
             r = h.add_run()
             if dataframe.columns[0][-2:]=='10' or dataframe.columns[0][-2:]=='11':
                 r.add_text(' ')
@@ -72,7 +70,7 @@ def export_to_docx(df_list, title):
             #p = document.add_paragraph()
             #run = p.add_run()
             #run.add_break()  # by default adds WD_BREAK.LINE
-            h = document.add_heading(dataframe.columns[0][:-2], 1)
+            h = document.add_heading(dataframe.columns[0][:-2], 2)
             r = h.add_run()
             if dataframe.columns[0][-2:]=='10' or dataframe.columns[0][-2:]=='11':
                 r.add_text(' ')
@@ -168,14 +166,16 @@ tableDescriptions = pd.read_excel('WID_Tables.xlsx')
 
 # match to sql doc
 
-sql_file = 'wid30.sql'
+sql_file = 'wid30final.sql'
 sql = open(sql_file, 'r', encoding="utf-16")
 fullText = sql.read()
 allTables = fullText.split('CREATE TABLE [dbo].')
 sqlSection = pd.DataFrame(columns=['chunk'])
 
 for x in allTables:
-    sqlSection = sqlSection.append({'chunk':x}, ignore_index=True)
+    chunk = pd.DataFrame([{'chunk':x}])
+    sqlSection = pd.concat([chunk,sqlSection], ignore_index=True)
+    
 
 tableBase = pd.DataFrame(columns=['TableName','FieldName'])
 #tableSection = pd.DataFrame(columns=['TableName','OrigFieldName','OrigKeys'])
@@ -184,17 +184,17 @@ tablePrimaryKeys = pd.DataFrame(columns=['TableName','FieldName','Constraint'])
 tableForeignKeys = pd.DataFrame(columns=['TableName','BaseFields','ReferenceTable','ReferenceFields','KeyName', 'ConstraintText','ConstraintNum'])
 tableForeignKeysCombined = pd.DataFrame(columns=['TableName','ConstraintText'])
 
-
+sqlSection.reset_index(drop=True)
 n = 0
 # extract tables
-while n < len(sqlSection.index)-1:
+while n < len(sqlSection.index)-1: 
+    section = pd.DataFrame.from_dict([{'TableName':sqlSection.chunk.loc[n].split("(\n\t")[0], 'FieldName':sqlSection.chunk.loc[n].split("(\n\t")[1], 'OrigKeys':sqlSection.chunk.loc[n].split("PRIMARY KEY CLUSTERED")[1]}])
+    tableBase = pd.concat([section,tableBase], ignore_index=True)
     n=n+1
-    tableBase = tableBase.append({'TableName':sqlSection.chunk.loc[n].split("(\n\t")[0], 'FieldName':sqlSection.chunk.loc[n].split("(\n\t")[1], 'OrigKeys':sqlSection.chunk.loc[n].split("PRIMARY KEY CLUSTERED")[1]}, ignore_index=True)
-
 
 m = 0
 # look for fields within tables
-while m < len(tableBase.index)-1:
+while m < len(tableBase.index):
     splitString = tableBase.FieldName.loc[m].split(",\n")
     tabName = tableBase.TableName.loc[m].replace('[','').replace(']','')
     # clean up keys
@@ -204,7 +204,8 @@ while m < len(tableBase.index)-1:
     fieldName = 0
     for y in constraintString:
         y = y.replace('\t','').replace('[','').replace(']','').replace(', ','').replace('ASC','').replace(' ','')
-        tablePrimaryKeys = tablePrimaryKeys.append({'TableName':tabName, 'FieldName':y, 'Constraint':'Primary Key'}, ignore_index=True)
+        pk = pd.DataFrame.from_dict([{'TableName':tabName, 'FieldName':y, 'Constraint':'Primary Key'}])
+        tablePrimaryKeys = pd.concat([pk,tablePrimaryKeys], ignore_index=True)
 
     # split out fields
     rowNum = 0
@@ -212,38 +213,44 @@ while m < len(tableBase.index)-1:
         if x[:1]=='[' or x[:1]=='\t':
             rowNum = rowNum+1
             x = x.replace('\t','').replace('[','').replace(']','').replace(', ',',')
-            tableStructure = tableStructure.append({'TableName':tabName, 'OrigFieldName':x, 'OrigKeys':NAN, 'FieldName':x.split(' ')[0], 'FieldType':x.split(' ')[1], 'FieldNULL':x.split(' ')[2], 'ColumnNum':str(rowNum)}, ignore_index=True)
+            ts = pd.DataFrame.from_dict([{'TableName':tabName, 'OrigFieldName':x, 'OrigKeys':NAN, 'FieldName':x.split(' ')[0], 'FieldType':x.split(' ')[1], 'FieldNULL':x.split(' ')[2], 'ColumnNum':str(rowNum)}])
+            tableStructure = pd.concat([ts,tableStructure], ignore_index=True)
     m = m + 1
 
-
 # look for foreign key details at end of document
-allForeign = sqlSection.loc[len(sqlSection.index)-1][0].split('GO\nALTER TABLE ')
+allForeign = sqlSection.loc[0]['chunk'].split('GO\nALTER TABLE ')
 for f in allForeign:
     if re.search('WITH CHECK ADD  CONSTRAINT', f):
-        tableForeignKeys = tableForeignKeys.append({'TableName':f.split('  ')[0].replace('[dbo].[','').replace(']',''),'BaseFields':f.split('FOREIGN KEY(')[1].split(')\n')[0],'ReferenceTable':f.split('REFERENCES ')[1].split('(')[0],'ReferenceFields':f.split('REFERENCES ')[1].split('(')[1].replace(')\n',''),'KeyName':f.split('WITH CHECK ADD  CONSTRAINT [')[1].split('] FOREIGN KEY')[0]}, ignore_index=True)
+        fk = pd.DataFrame.from_dict([{'TableName':f.split('  ')[0].replace('[dbo].[','').replace(']',''),'BaseFields':f.split('FOREIGN KEY(')[1].split(')\n')[0],'ReferenceTable':f.split('REFERENCES ')[1].split('(')[0],'ReferenceFields':f.split('REFERENCES ')[1].split('(')[1].replace(')\n',''),'KeyName':f.split('WITH CHECK ADD  CONSTRAINT [')[1].split('] FOREIGN KEY')[0]}])
+        tableForeignKeys = pd.concat([fk,tableForeignKeys], ignore_index=True)
 # generate foreign key text for document
 l = 0
 tname2 = ''    
 r = 1
-while l < len(tableForeignKeys.index)-1:
+while l < len(tableForeignKeys.index):
     tname = tableForeignKeys.loc[l]['TableName']
     if tname == tname2:
         r = r + 1
     else:
         r = 1
-    tableForeignKeys.loc[l]['ConstraintText'] = str(r) + '. Foreign Key (' + tableForeignKeys.loc[l]['BaseFields'].replace('[',tname+'.').replace(']','') + ') references (' + tableForeignKeys.loc[l]['ReferenceFields'].replace(']','').replace('[',tableForeignKeys.loc[l]['ReferenceTable'].replace('] ','').replace('[dbo].[','')+'.') + ')'
+    tableForeignKeys.loc[l, 'ConstraintText'] = str(r) + '. Foreign Key (' + tableForeignKeys.loc[l]['BaseFields'].replace('[',tname+'.').replace(']','') + ') references (' + tableForeignKeys.loc[l]['ReferenceFields'].replace(']','').replace('[',tableForeignKeys.loc[l]['ReferenceTable'].replace('] ','').replace('[dbo].[','')+'.') + ')'
     if tname == tname2:
         cname = tableForeignKeys.loc[l]['ConstraintText']
         newname = tableForeignKeysCombined[tableForeignKeysCombined['TableName']==tname]['ConstraintText'].values[0] + '\n' + cname
         tableForeignKeysCombined.loc[tableForeignKeysCombined['TableName']==tname, 'ConstraintText'] = newname
     else:
-        tableForeignKeysCombined = tableForeignKeysCombined.append({'TableName':tname, 'ConstraintText':tableForeignKeys.loc[l]['ConstraintText']}, ignore_index=True)
+        fkc = pd.DataFrame([{'TableName':tname, 'ConstraintText':tableForeignKeys.loc[l]['ConstraintText']}])
+        tableForeignKeysCombined = pd.concat([fkc,tableForeignKeysCombined], ignore_index=True)
     tname2 = tableForeignKeys.loc[l]['TableName']
     l = l + 1
 
 
 #display(tablePrimaryKeys)
 #display(tableForeignKeysCombined)
+
+##add end row
+ts = pd.DataFrame([{'TableName':"end",'orig_TableName':"end", 'OrigFieldName':"end", 'OrigKeys':NAN, 'FieldName':"end", 'FieldType':NAN, 'FieldNULL':NAN, 'ColumnNum':'1'}])
+tableStructure = pd.concat([ts,tableStructure], ignore_index=True)
 
 
 # join to field details
@@ -258,6 +265,7 @@ tablePrimaryKeys['TableName'] = tablePrimaryKeys['TableName'].str.lower()
 tablePrimaryKeys['FieldName'] = tablePrimaryKeys['FieldName'].str.lower()
 
 tableStructure = pd.merge(tableStructure,tablePrimaryKeys, how='outer', left_on=['TableName','FieldName'], right_on=['TableName','FieldName'])
+tableStructure = tableStructure.sort_values(by=['TableName','FieldOrder'], ascending=[True,False])
 
 ## look for field name in tableForeignKeys to get number of foreign key for table
 f = 0
@@ -292,6 +300,9 @@ formattedTable = pd.DataFrame(columns=['TableName','FieldName','FieldType','Cons
 z = 0
 tname2 = tableStructure.loc[0]['TableName']    
 
+#try to fix order problem
+tableStructure = tableStructure.sort_values(by=['TableName','FieldOrder'], ascending=[True,False]).reset_index()
+
 #merge and drop duplicates - start here
 dflist = pd.DataFrame(columns=['tabletype','tablename','sequence','content'])
 
@@ -307,22 +318,25 @@ while z < len(tableStructure.index):
         ttype = ''
     theader = pd.DataFrame([tdesc], columns=[tableStructure.loc[z]['orig_TableName']+ctable+ctrigger])
     
-
     fieldname = tableStructure.loc[z]['ColumnNum'] + '. ' + tableStructure.loc[z]['orig_FieldName']
-    formattedTable = formattedTable.append({'TableName':tname, 'FieldName':fieldname, 'FieldType':tableStructure.loc[z]['FieldType'], 'Constraint':tableStructure.loc[z]['Constraint'], 'FieldDesc':tableStructure.loc[z]['FieldDesc']}, ignore_index=True)
-        
+    ft = pd.DataFrame([{'TableName':tname, 'FieldName':fieldname, 'FieldType':tableStructure.loc[z]['FieldType'], 'Constraint':tableStructure.loc[z]['Constraint'], 'FieldDesc':tableStructure.loc[z]['FieldDesc']}])
+    formattedTable = pd.concat([ft,formattedTable], ignore_index=True)
+
     if tname != tname2:
 
         if len(tableDescriptions[tableDescriptions['TableName']==tname2].reset_index().index)>0:
             ttype = tableDescriptions[tableDescriptions['TableName']==tname2].reset_index().loc[0].at['TableType']
         else:
             ttype = ''
-            
-        dflist = dflist.append({'tabletype':ttype,'tablename':tname2,'sequence':1,'content':theader2}, ignore_index=True)
-        dflist = dflist.append({'tabletype':ttype,'tablename':tname2,'sequence':2,'content':formattedTable[formattedTable['TableName']==tname2][['FieldName','FieldType','Constraint','FieldDesc']]}, ignore_index=True)
+
+        tt = pd.DataFrame([{'tabletype':ttype,'tablename':tname2,'sequence':1,'content':theader2}])    
+        dflist = pd.concat([tt,dflist], ignore_index=True)
+        tt2 = pd.DataFrame([{'tabletype':ttype,'tablename':tname2,'sequence':2,'content':formattedTable[formattedTable['TableName']==tname2][['FieldName','FieldType','Constraint','FieldDesc']]}])
+        dflist = pd.concat([tt2, dflist], ignore_index=True)
         if len(tableForeignKeysCombined[tableForeignKeysCombined['TableName'].str.lower()==tname2].reset_index().index)>0:
             fkey = pd.DataFrame([tableForeignKeysCombined[tableForeignKeysCombined['TableName'].str.lower()==tname2].reset_index().loc[0]['ConstraintText']], columns=['Constraints'])
-            dflist = dflist.append({'tabletype':ttype,'tablename':tname2,'sequence':3,'content':fkey}, ignore_index=True)
+            dfl = pd.DataFrame([{'tabletype':ttype,'tablename':tname2,'sequence':3,'content':fkey}])
+            dflist = pd.concat([dfl, dflist], ignore_index=True)
 
 
     tname2 = tableStructure.loc[z]['TableName']
@@ -330,6 +344,12 @@ while z < len(tableStructure.index):
     #theader2 = pd.DataFrame(["<w:style = 'Heading 2'>" + tableStructure.loc[z]['orig_TableName'] + '</w:style>' , tdesc], columns=['heading','desc'])
     z = z + 1
 
+tt2 = pd.DataFrame([{'tabletype':ttype,'tablename':tname2,'sequence':2,'content':formattedTable[formattedTable['TableName']==tname2][['FieldName','FieldType','Constraint','FieldDesc']]}])
+dflist = pd.concat([tt2, dflist], ignore_index=True)
+if len(tableForeignKeysCombined[tableForeignKeysCombined['TableName'].str.lower()==tname2].reset_index().index)>0:
+    fkey = pd.DataFrame([tableForeignKeysCombined[tableForeignKeysCombined['TableName'].str.lower()==tname2].reset_index().loc[0]['ConstraintText']], columns=['Constraints'])
+    dfl = pd.DataFrame([{'tabletype':ttype,'tablename':tname2,'sequence':3,'content':fkey}])
+    dflist = pd.concat([dfl, dflist], ignore_index=True)
 
 
 display(dflist[dflist['tabletype']=='lookup'].sort_values(by=['tablename','sequence']))
