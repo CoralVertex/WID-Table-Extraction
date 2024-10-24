@@ -166,7 +166,7 @@ tableDescriptions = pd.read_excel('WID_Tables.xlsx')
 
 # match to sql doc
 
-sql_file = 'wid30final.sql'
+sql_file = 'wid30oct2024.sql'
 sql = open(sql_file, 'r', encoding="utf-16")
 fullText = sql.read()
 allTables = fullText.split('CREATE TABLE [dbo].')
